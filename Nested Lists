@@ -1,0 +1,24 @@
+records = []
+if __name__ == '__main__':
+    for _ in range(int(input())):
+        name = input()
+        score = float(input())
+        records.append([name, score])
+
+records.sort(key=lambda x: x[1])
+semifinal = set()
+for i in range(len(records)):
+    semifinal.add(records[i][1])
+
+semifinal = sorted(semifinal)
+
+final = []
+for j in range(len(records)):
+    if records[j][1] == semifinal[1]:
+        final.append(records[j][0])
+
+final.sort()
+        
+for k in range(len(final)):
+    print(final[k])
+    
