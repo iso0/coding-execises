@@ -1,0 +1,119 @@
+import pandas as pd
+import streamlit as st
+import datetime as dt
+data_yeni = pd.read_excel(r'C:\Users\burak.ozturk\Desktop\SürdürülebilirlikHaftalıkDosya11072022.xlsx')
+data_eski = pd.read_csv(r'C:\Users\burak.ozturk\Desktop\hisse_endeks_ds.csv', sep = ";")
+data_yeni = pd.DataFrame(data_yeni)
+data_eski = pd.DataFrame(data_eski)
+
+num_cat = []
+
+
+for i in range(0, len(data_yeni["Instrument"])):
+    num_cat.append(0)
+    
+data_yeni["Number of Category>26"] = num_cat
+
+data_yeni.fillna(0, inplace = True)
+
+for i in range(0, len(data_yeni["Instrument"])):
+    if data_yeni["Resource Use Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1 
+    if data_yeni["Emissions Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1 
+    if data_yeni["Environmental Innovation Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Workforce Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Human Rights Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Community Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Product Responsibility Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Management Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Shareholders Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["CSR Strategy Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    
+
+for i in range(len(data_yeni["Instrument"])):
+    data_yeni["Instrument"][i] = data_yeni["Instrument"][i][:-3] + ".E"
+
+dict1 = {}
+dict2 = {}
+
+for i in range(0, len(data_yeni["Instrument"])):
+    if data_yeni["ESG Combined Score"][i] >= 50.00 and data_yeni["Environmental Pillar Score"][i] >= 40.00 and data_yeni["Social Pillar Score"][i] >= 40.00 and data_yeni["Governance Pillar Score"][i] >= 40.00 and data_yeni["Number of Category>26"][i] >= 8.00:
+        dict1[data_yeni["Instrument"][i]]= data_yeni["Date"][i] 
+    else: 
+        dict2[data_yeni["Instrument"][i]] = data_yeni["Date"][i]    
+    
+listyeni = dict1.keys()
+listyeni = list(dict.fromkeys(listyeni))
+listyeni.sort()
+dublicated_companies = ["KRDMA.E", "KRDMB.E", "ISATR.E", "ISBTR.E"]
+listyeni = [c for c in listyeni if c not in dublicated_companies]
+
+dfyeni = pd.DataFrame(listyeni, columns= ['StocksShouldBeInIndex'])
+
+
+data_eski = data_eski[data_eski["ENDEKS KODU"] == "XUSRD"]
+data_eski = data_eski.reset_index(drop=True)
+
+tarih = dt.datetime.now()
+now = tarih.strftime("%d.%m.%Y")
+
+st.info("Eikon'dan Çekilen Veri Tarihi: " + str(now))
+
+st.subheader("Eikon'dan Çekilen Son Veriye Göre Endekse Girme Şartını Sağlayan ve Endekste Olmayan Şirketler:")
+
+
+gireceklerlisti = []
+
+for i in range(0, len(dfyeni.StocksShouldBeInIndex)):
+    if dfyeni.StocksShouldBeInIndex[i] not in list(data_eski["BILESEN KODU"]) and dublicated_companies:
+        gireceklerlisti.append([dfyeni.StocksShouldBeInIndex[i], str(dict1.get(dfyeni.StocksShouldBeInIndex[i]))])        
+        st.success(dfyeni.StocksShouldBeInIndex[i] + " payı endekse eklenmeli. " + str(dict1.get(dfyeni.StocksShouldBeInIndex[i])) + " dönemi notları ile endekse girme şartlarını sağlamaktadır.")
+
+girecekler = pd.DataFrame(gireceklerlisti, columns= ["Şirket Kodu", "Not Mali Dönemi"])
+girecekler.index = girecekler.index + 1
+st.write(girecekler)
+
+st.subheader("Eikon'dan Çekilen Son Veriye Göre Endekse Girme Şartını Sağlamayan fakat Endekste Olan Şirketler:")
+
+
+çıkacaklarlisti = []
+
+for i in range(0, len(data_eski["BILESEN KODU"])):
+    if data_eski["BILESEN KODU"][i] not in list(dfyeni.StocksShouldBeInIndex):
+        for j in range(len(data_yeni["Instrument"])):
+            if data_yeni["Instrument"][j] == data_eski["BILESEN KODU"][i]:
+                if  40 < data_yeni["ESG Combined Score"][j] < 50:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(dict2.get(data_eski["BILESEN KODU"][i])), "ESG Combined Score = " + str(round(data_yeni["ESG Combined Score"][j], 2))])
+                    st.error(data_eski["BILESEN KODU"][i] + " payı endeks kurallarına uymuyor." + str(dict2.get(data_eski["BILESEN KODU"][i])) + "Çünkü ESG Combined Score'u " + str(round(data_yeni["ESG Combined Score"][j], 2)) + ", 50 değerinin altında." )
+                if data_yeni["ESG Combined Score"][j] < 40:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(dict2.get(data_eski["BILESEN KODU"][i])), "ESG Combined Score(Uyarı: Endeksten çıkmalı) = " + str(round(data_yeni["ESG Combined Score"][j], 2))])
+                    st.error(data_eski["BILESEN KODU"][i] + " payı izleyen haftanın ilk işlem gününden geçerli olacak şekilde endekslerden çıkarılmalı. Çünkü ESG Combined Score'u " + str(round(data_yeni["ESG Combined Score"][j], 2)) + ", 40 değerinin altında." )
+                if data_yeni["Environmental Pillar Score"][j] < 40:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(dict2.get(data_eski["BILESEN KODU"][i])), "Environmental Pillar Score = " + str(round(data_yeni["Environmental Pillar Score"][j], 2))])
+                    st.error(data_eski["BILESEN KODU"][i] + " payı endeks kurallarına " + str(dict2.get(data_eski["BILESEN KODU"][i])) + " dönemi notları ile uymuyor. Çünkü Environmental Pillar Score'u " + str(round(data_yeni["Environmental Pillar Score"][j], 2)) + ", 40 değerinin altında." )
+                if data_yeni["Social Pillar Score"][j] < 40:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(dict2.get(data_eski["BILESEN KODU"][i])), "Social Pillar Score = " + str(round(data_yeni["Social Pillar Score"][j], 2))])
+                    st.error(data_eski["BILESEN KODU"][i] + " payı endeks kurallarına " + str(dict2.get(data_eski["BILESEN KODU"][i])) + " dönemi notları ile uymuyor. Çünkü Social Pillar Score'u " + str(round(data_yeni["Social Pillar Score"][j], 2)) + ", 40 değerinin altında." )
+                if data_yeni["Governance Pillar Score"][j] < 40:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(dict2.get(data_eski["BILESEN KODU"][i])), "Governance Pillar Score = " + str(round(data_yeni["Governance Pillar Score"][j], 2))])
+                    st.error(data_eski["BILESEN KODU"][i] + " payı endeks kurallarına " + str(dict2.get(data_eski["BILESEN KODU"][i])) + " dönemi notları ile uymuyor. Çünkü Governance Pillar Score'u " + str(round(data_yeni["Governance Pillar Score"][j], 2)) + ", 40 değerinin altında." )
+                if data_yeni["Number of Category>26"][j] < 8:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(dict2.get(data_eski["BILESEN KODU"][i])), "26'dan büyük olması gereken kategori sayısı = " + str(data_yeni["Number of Category>26"][j]) + "/10"])
+                    st.error(data_eski["BILESEN KODU"][i] + " payı endeks kurallarına " + str(dict2.get(data_eski["BILESEN KODU"][i])) + " dönemi notları ile uymuyor. Çünkü 26'dan büyük olması gereken kategori sayısı " + str(data_yeni["Number of Category>26"][j]) + "/10" )
+
+çıkacaklar = pd.DataFrame(çıkacaklarlisti, columns = ["Şirket Kodu", "Not Mali Dönemi", "Sebep"])
+çıkacaklar.index = çıkacaklar.index + 1
+st.write(çıkacaklar)
+st.write(dfyeni)
+
+
+
