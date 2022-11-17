@@ -1,0 +1,164 @@
+import pandas as pd
+import streamlit as st
+import datetime as dt
+data_yeni = pd.read_excel(r'C:\Users\burak.ozturk\Desktop\SürdürülebilirlikHaftalıkDosya11142022.xlsx')
+data_eski = pd.read_csv(r'C:\Users\burak.ozturk\Desktop\hisse_endeks_ds.csv', sep = ";")
+pyapı = pd.read_excel(r'M:\Ortak\Mudurluk\PYAPI.xlsm', 'RAPOR', skiprows=2)
+pyapı = pd.DataFrame(pyapı)
+data_yeni = pd.DataFrame(data_yeni)
+data_eski = pd.DataFrame(data_eski)
+
+num_cat = []
+
+for i in range(len(pyapı["M KOD"])):
+    pyapı["M KOD"][i] = str(pyapı["M KOD"][i]) + ".E"
+    
+    
+for i in range(0, len(data_yeni["Instrument"])):
+    num_cat.append(0)
+    
+data_yeni["Number of Category>26"] = num_cat
+
+data_yeni.fillna(0, inplace = True)
+
+for i in range(0, len(data_yeni["Instrument"])):
+    if data_yeni["Resource Use Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1 
+    if data_yeni["Emissions Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1 
+    if data_yeni["Environmental Innovation Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Workforce Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Human Rights Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Community Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Product Responsibility Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Management Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["Shareholders Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    if data_yeni["CSR Strategy Score"][i] >= 26:
+        data_yeni["Number of Category>26"][i] += 1
+    
+
+for i in range(len(data_yeni["Instrument"])):
+    data_yeni["Instrument"][i] = data_yeni["Instrument"][i][:-3] + ".E"
+
+dict1 = {}
+
+for i in range(0, len(data_yeni["Instrument"])):
+    if data_yeni["ESG Combined Score"][i] >= 50.00 and data_yeni["Environmental Pillar Score"][i] >= 40.00 and data_yeni["Social Pillar Score"][i] >= 40.00 and data_yeni["Governance Pillar Score"][i] >= 40.00 and data_yeni["Number of Category>26"][i] >= 8.00:
+        if data_yeni["Instrument"][i] not in dict1.keys():
+            dict1[data_yeni["Instrument"][i]] = data_yeni["Date"][i] 
+
+
+listoflastyear = []
+
+for i in range(len(dict1.keys())):
+    if list(dict1.values())[i][:4] == "2020":
+        listoflastyear.append([list(dict1.keys())[i], list(dict1.values())[i]])
+
+
+listyeni = dict1.keys()
+listyeni = list(dict.fromkeys(listyeni))
+listyeni.sort()
+dublicated_companies = ["KRDMA.E", "KRDMB.E", "ISATR.E", "ISBTR.E"]
+listyeni = [c for c in listyeni if c not in dublicated_companies]
+
+dfyeni = pd.DataFrame(listyeni, columns= ['StocksShouldBeInIndex'])
+
+
+data_eski = data_eski[data_eski["ENDEKS KODU"] == "XUSRD"]
+data_eski = data_eski.reset_index(drop=True)
+
+tarih = dt.datetime.today()
+now = tarih.strftime("%d.%m.%Y")
+
+
+st.info("Eikon'dan Çekilen Veri Tarihi: " + str(now))
+
+st.subheader("Eikon'dan Çekilen Son Veriye Göre Endekse Girme Şartını Sağlayan ve Endekste Olmayan Şirketler:")
+
+
+gireceklerlisti = []
+
+for i in range(0, len(dfyeni.StocksShouldBeInIndex)):
+    if dfyeni.StocksShouldBeInIndex[i] not in list(data_eski["BILESEN KODU"]) and dublicated_companies:
+        gireceklerlisti.append([dfyeni.StocksShouldBeInIndex[i], str(dict1.get(dfyeni.StocksShouldBeInIndex[i]))])        
+
+girecekler = pd.DataFrame(gireceklerlisti, columns= ["Şirket Kodu", "Not Mali Dönemi"])
+
+girenadı = []
+
+for i in range(len(girecekler["Şirket Kodu"])):
+    for j in range(len(pyapı["M KOD"])):
+        if girecekler["Şirket Kodu"][i] == pyapı["M KOD"][j]:
+            girenadı.append(pyapı["MENKUL ADI"][j])
+
+girecekler.index += 1
+girecekler.insert(1, "Şirket Adı", girenadı, True)
+st.dataframe(girecekler)
+
+st.subheader("Eikon'dan Çekilen Son Veriye Göre Endekse Girme Şartını Sağlamayan fakat Endekste Olan Şirketler:")
+
+
+çıkacaklarlisti = []
+
+for i in range(0, len(data_eski["BILESEN KODU"])):
+    if data_eski["BILESEN KODU"][i] not in list(dfyeni.StocksShouldBeInIndex):
+        for j in range(len(data_yeni["Instrument"])):
+            if data_yeni["Instrument"][j] == data_eski["BILESEN KODU"][i]:
+                if  40 < data_yeni["ESG Combined Score"][j] < 50:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(data_yeni["Date"][j]), "ESG Combined Score = " + str(round(data_yeni["ESG Combined Score"][j], 2))])
+                if data_yeni["ESG Combined Score"][j] < 40:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(data_yeni["Date"][j]), "ESG Combined Score(Uyarı: Endeksten çıkmalı) = " + str(round(data_yeni["ESG Combined Score"][j], 2))])
+                if data_yeni["Environmental Pillar Score"][j] < 40:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(data_yeni["Date"][j]), "Environmental Pillar Score = " + str(round(data_yeni["Environmental Pillar Score"][j], 2))])
+                if data_yeni["Social Pillar Score"][j] < 40:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(data_yeni["Date"][j]), "Social Pillar Score = " + str(round(data_yeni["Social Pillar Score"][j], 2))])
+                if data_yeni["Governance Pillar Score"][j] < 40:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(data_yeni["Date"][j]), "Governance Pillar Score = " + str(round(data_yeni["Governance Pillar Score"][j], 2))])
+                if data_yeni["Number of Category>26"][j] < 8:
+                    çıkacaklarlisti.append([data_eski["BILESEN KODU"][i], str(data_yeni["Date"][j]), "26'dan büyük olması gereken kategori sayısı = " + str(data_yeni["Number of Category>26"][j]) + "/10"])
+
+
+çıkacaklar = pd.DataFrame(çıkacaklarlisti, columns = ["Şirket Kodu", "Not Mali Dönemi", "Sebep"])
+
+çıkanadı = []
+for i in range(len(çıkacaklar["Şirket Kodu"])):
+    for j in range(len(pyapı["M KOD"])):
+        if çıkacaklar["Şirket Kodu"][i] == pyapı["M KOD"][j]:
+            çıkanadı.append(pyapı["MENKUL ADI"][j])
+
+çıkacaklar.insert(1, "Şirket Adı", çıkanadı, True)
+çıkacaklar.index += 1
+st.dataframe(çıkacaklar)
+
+for i in range(len(çıkacaklarlisti)):
+    if çıkacaklarlisti[i][1][:4] == "2020":
+        if [çıkacaklarlisti[i][0], çıkacaklarlisti[i][1]] not in listoflastyear:
+            listoflastyear.append([çıkacaklarlisti[i][0], çıkacaklarlisti[i][1]])
+
+st.subheader("Endekste 2020 Yılına Ait Dönem Notu ile Bulunan Şirketler")
+
+ebele = pd.DataFrame(listoflastyear, columns = ["Şirket Kodu", "İnanmazsan Burada da Dönem Tarihi"])
+
+geçenyıllılar = []
+for i in range(len(listoflastyear)):
+    for j in range(len(pyapı["M KOD"])):
+        if listoflastyear[i][0] == pyapı["M KOD"][j]:
+            geçenyıllılar.append(pyapı["MENKUL ADI"][j])
+
+ebele.insert(1, "Şirket Adı", geçenyıllılar, True)
+ebele.index += 1
+st.dataframe(ebele)
+
+st.subheader(str(now) + " tarihi ile Eikon'dan Çekilen Veri")
+data_yeni.index += 1
+st.dataframe(data_yeni)
+
+
+
