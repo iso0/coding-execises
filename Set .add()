@@ -1,0 +1,5 @@
+s = set()
+x = int(input())
+for i in range(x):
+    s.add(input())
+print(len(s))
