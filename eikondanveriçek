@@ -1,0 +1,28 @@
+import eikon as ek
+import datetime
+
+ek.set_log_level(1)
+ek.set_app_key('2da27cf7f67d4e52be06fb39b0eeaee3a9a00be0')
+#df,e = ek.get_data(['LSEG.L'], ['TR.RIC'])
+
+etf_esg, err = ek.get_data('0#.XUTUM',
+['TR.TRESGScore.date','TR.TRESGCScore',"TR.TRESGCControversiesScore","TR.TRESGScore",'TR.EnvironmentPillarScore','TR.SocialPillarScore','TR.GovernancePillarScore','TR.TRESGResourceUseScore','TR.TRESGEmissionsScore','TR.TRESGInnovationScore','TR.TRESGWorkforceScore','TR.TRESGHumanRightsScore','TR.TRESGCommunityScore','TR.TRESGProductResponsibilityScore','TR.TRESGManagementScore','TR.TRESGShareholdersScore','TR.TRESGCSRStrategyScore', 'TR.ESGPeriodLastUpdateDate'],{'SDate':'0', 'EDate':'-3','Period':'FY0','Frq':'FY'})
+
+
+etf_esg['Date']=etf_esg['Date'].astype('str')
+
+etf_esg['Date']=etf_esg['Date'].apply(lambda x: x[:10])
+
+etf_esg = etf_esg[etf_esg['Date']>='2020']
+
+e = datetime.datetime.now()
+now = e.strftime("%m%d%Y")
+extension = ".xlsx"
+
+filename = now + extension
+
+#etf_esg.to_excel(f"M:\Ortak\Mudurluk\Sürdürülebilirlik Endeksi\HAFTALIK DEĞERLENDİRME DOSYASI\SürdürülebilirlikHaftalıkDosya{filename}", index = False)
+
+
+
+print(etf_esg)
