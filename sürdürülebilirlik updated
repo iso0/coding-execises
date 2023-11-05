@@ -9,8 +9,8 @@ import win32com.client as win32
 #mail gönderme için gerekli atamaların yapılması
 outlook = win32.Dispatch('outlook.application')
 mail = outlook.CreateItem(0)
-mail.To = 'esgindex@borsaistanbul.com'
-mail.BCC = 'burak.ozturk@borsaistanbul.com'
+mail.To = '.com'
+mail.BCC = '.com'
 mail.Subject = "Sürdürülebilirlik Endeksi Haftalık Değerlendirme Hk. "
 # çalışma pazartesi günleri yapıldığı için pazartesi tarihi tanımlandı
 today = dt.date.today()
@@ -19,13 +19,13 @@ previous_monday1 = today - dt.timedelta(days=today.weekday()) - dt.timedelta(day
 this_monday = this_monday1.strftime("%m%d%Y")
 previous_monday = previous_monday1.strftime("%m%d%Y")
 #ilgili exceller okutuldu ve verisetleri oluşturuldu
-attachment1='M:\Ortak\Mudurluk\Sürdürülebilirlik Endeksi\HAFTALIK DEĞERLENDİRME DOSYASI\SürdürülebilirlikHaftalıkDosya' + this_monday + '.xlsx'
+attachment1=' + this_monday + '.xlsx'
 mail.Attachments.Add(Source=attachment1)
-data_yeni = pd.read_excel(r'M:\Ortak\Mudurluk\Sürdürülebilirlik Endeksi\HAFTALIK DEĞERLENDİRME DOSYASI\SürdürülebilirlikHaftalıkDosya' + this_monday + '.xlsx')
-data_eski = pd.read_csv(r'M:\Ortak\Mudurluk\Sürdürülebilirlik Endeksi\HAFTALIK DEĞERLENDİRME DOSYASI\hisse_endeks_ds.csv', sep = ";")
-data_geçen_hafta = pd.read_excel(r'M:\Ortak\Mudurluk\Sürdürülebilirlik Endeksi\HAFTALIK DEĞERLENDİRME DOSYASI\SürdürülebilirlikHaftalıkDosya' + previous_monday + '.xlsx') 
-pyapı = pd.read_excel(r'M:\Ortak\Mudurluk\PYAPI.xlsm', 'RAPOR', skiprows=2)
-gönüllüler = pd.read_excel(r'M:\Ortak\Mudurluk\Sürdürülebilirlik Endeksi\HAFTALIK DEĞERLENDİRME DOSYASI\Gönüllü_Şirketler_Listesi.xlsx')
+data_yeni = pd.read_excel(r'' + this_monday + '.xlsx')
+data_eski = pd.read_csv(r'', sep = ";")
+data_geçen_hafta = pd.read_excel(r'' + previous_monday + '.xlsx') 
+pyapı = pd.read_excel(r'', '', skiprows=2)
+gönüllüler = pd.read_excel(r'')
 pyapı = pd.DataFrame(pyapı) # bülten adlarını almak için pyapı okutuldu
 gönüllüler = pd.DataFrame(gönüllüler) # gönüllü şirketlerin listesi
 data_yeni = pd.DataFrame(data_yeni) # bu pazartesi eikondan çekilen data
@@ -435,4 +435,5 @@ data_yeni.index += 1
 st.dataframe(data_yeni)
 
 mail.Send()
+
 
