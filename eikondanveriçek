@@ -21,7 +21,7 @@ extension = ".xlsx"
 
 filename = now + extension
 
-#etf_esg.to_excel(f"M:\Ortak\Mudurluk\Sürdürülebilirlik Endeksi\HAFTALIK DEĞERLENDİRME DOSYASI\SürdürülebilirlikHaftalıkDosya{filename}", index = False)
+#etf_esg.to_excel(f"}", index = False)
 
 
 
