@@ -1,0 +1,51 @@
+import requests
+import pandas as pd
+
+url = 'https://www.kap.org.tr/tr/api/memberDisclosureQuery'
+payload = {
+    "fromDate": "2023-07-01",
+    "toDate": "2023-11-06",
+    "year": "",
+    "prd": "",
+    "term": "",
+    "ruleType": "",
+    "bdkReview": "",
+    "disclosureClass": "",
+    "index": "",
+    "market": "",
+    "isLate": "",
+    "subjectList": "",
+    "mkkMemberOidList": [],
+    "inactiveMkkMemberOidList": [],
+    "bdkMemberOidList": [],
+    "mainSector": "",
+    "subject": ["Yeni İş İlişkisi"],
+    "sector": "",
+    "subSector": "",
+    "memberType": "",
+    "fromSrc": "N",
+    "srcCategory": "",
+    "discIndex": []
+}
+
+all_data = []
+
+page = 1
+page_size = 10  # Adjust the page size as needed
+
+while True:
+    payload['page'] = page
+    payload['pageSize'] = page_size
+
+    response = requests.post(url, json=payload)
+    data = response.json()
+
+    if not data:  # If no more data is returned, break the loop
+        break
+
+    all_data.extend(data)  # Add the data to the list
+
+    page += 1
+
+# Combine all the data into a DataFrame
+df = pd.json_normalize(all_data)
